@@ -51,7 +51,8 @@ public class GenericRepository<E>(StoreContext context) : IGenericRepository<E> 
         return await ApplySpecification(spec).ToListAsync();
     }
 
-    private IQueryable<E> ApplySpecification(ISpecification<E> spec){
+    private IQueryable<E> ApplySpecification(ISpecification<E> spec)
+    {
         return SpecificationEvaluator<E>.GetQuery(context.Set<E>().AsQueryable(), spec);
     }
 
@@ -68,5 +69,97 @@ public class GenericRepository<E>(StoreContext context) : IGenericRepository<E> 
         ISpecification<E, EResult> spec)
     {
         return SpecificationEvaluator<E>.GetQuery<E, EResult>(context.Set<E>().AsQueryable(), spec);
+    }
+
+    public async Task<int> CountAsync(ISpecification<E> spec)
+    {
+        var evaluator = new SpecificationEvaluator<E>();
+        return await evaluator.ApplyCriteria(context.Set<E>().AsQueryable(), spec);
+        // var query = context.Set<E>().AsQueryable();
+        // query = spec.ApplyCriteria(query);
+        // return await query.CountAsync();
+    }
+}
+
+public class SpecificationEvaluator<E> where E : BaseEntity
+{
+    public async Task<int> ApplyCriteria(IQueryable<E> query, ISpecification<E> spec)
+    {
+        if (spec.Criteria != null)
+        {
+            query = query.Where(spec.Criteria);
+        }
+        return await query.CountAsync();
+    }
+    public static IQueryable<E> GetQuery(IQueryable<E> query, ISpecification<E> spec)
+    {
+        if (spec.Criteria != null)
+        {
+            query = query.Where(spec.Criteria);
+        }
+        if (spec.OrderBy != null)
+        {
+            query = query.OrderBy(spec.OrderBy);
+        }
+        if (spec.OrderByDescending != null)
+        {
+            query = query.OrderByDescending(spec.OrderByDescending);
+        }
+        if (spec.IsDistinct)
+        {
+            query = query.Distinct();
+        }
+        if (spec.IsPagingEnabled)
+        {
+
+            if (spec.Skip > 0)
+            {
+                query = query.Skip(spec.Skip);
+            }
+            if (spec.Take > 0)
+            {
+                query = query.Take(spec.Take);
+            }
+        }
+        return query;
+    }
+
+    public static IQueryable<EResult> GetQuery<ESpec, EResult>(IQueryable<E> query,
+        ISpecification<E, EResult> spec)
+    {
+        if (spec.Criteria != null)
+        {
+            query = query.Where(spec.Criteria);
+        }
+        if (spec.OrderBy != null)
+        {
+            query = query.OrderBy(spec.OrderBy);
+        }
+        if (spec.OrderByDescending != null)
+        {
+            query = query.OrderByDescending(spec.OrderByDescending);
+        }
+        var selectQuery = query as IQueryable<EResult>;
+        if (spec.Select != null)
+        {
+            selectQuery = query.Select(spec.Select);
+        }
+        if (spec.IsDistinct)
+        {
+            selectQuery = selectQuery?.Distinct();
+        }
+        if (spec.IsPagingEnabled)
+        {
+
+            if (spec.Skip > 0)
+            {
+                selectQuery = selectQuery?.Skip(spec.Skip);
+            }
+            if (spec.Take > 0)
+            {
+                selectQuery = selectQuery?.Take(spec.Take);
+            }
+        }
+        return selectQuery ?? query.Cast<EResult>();
     }
 }

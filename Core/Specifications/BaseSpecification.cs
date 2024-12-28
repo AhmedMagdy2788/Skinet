@@ -1,6 +1,5 @@
 using System;
 using System.Linq.Expressions;
-using Core.Entities;
 using Core.Interfaces;
 
 namespace Core.Specifications;
@@ -18,6 +17,20 @@ public class BaseSpecification<E>(
 
     public bool IsDistinct{ get; private set; }
 
+    public bool IsPagingEnabled { get; private set; }
+
+    public int Take { get; private set; }
+
+    public int Skip { get; private set; }
+
+    // public IQueryable<E> ApplyCriteria(IQueryable<E> query)
+    // {
+    //     if(Criteria != null){
+    //         query = query.Where(Criteria);
+    //     }
+    //     return query;
+    // }
+
     protected void AddOrderBy(Expression<Func<E, object>> orderByExpression)
     {
         OrderBy = orderByExpression;
@@ -28,6 +41,12 @@ public class BaseSpecification<E>(
     }
     protected void ApplyDistinct(){
         IsDistinct = true;
+    }
+    protected void ApplyPaging(int skep, int take)
+    {
+        IsPagingEnabled = true;
+        Skip = skep;
+        Take = take;
     }
 }
 public class BaseSpecification<E, EResult>(
