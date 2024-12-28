@@ -3,9 +3,7 @@ using API.RequestHelpers;
 using Core.Entities;
 using Core.Interfaces;
 using Core.Specifications;
-using Infrastructure.Data;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace API.Controllers;
 
@@ -18,7 +16,7 @@ public class ProductsController(IGenericRepository<Product> genericRepository)
         [FromQuery] ProductSpecParams specParams)
     {
         var spec = new ProductSpecification(specParams);
-        var pagination = await CreatePagedResult<Product>(genericRepository, spec, specParams.PageIndex, specParams.PageSize);
+        var pagination = await CreatePagedResult(genericRepository, spec, specParams.PageIndex, specParams.PageSize);
         return Ok(pagination);
     }
 
